@@ -1,0 +1,55 @@
+# Pythonバイトコード
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 仮想環境関連
+venv/
+myenv/
+.env/
+*.env
+
+# Django関連
+*.log
+*.pot
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+*.log
+
+# メディアファイル（アップロードされたファイルなど）
+media/
+
+# 静的ファイル（Djangoのcollectstaticで生成されたファイル）
+static/
+
+# プロジェクト設定ファイル
+*.sqlite3
+*.db
+
+# pyenv（pyenv-winなどを使っている場合）
+.python-version
+
+# VS Codeの設定ファイル
+.vscode/
+
+# JetBrains IDE（PyCharmなど）の設定ファイル
+.idea/
+
+# その他の一時ファイル
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# デバッグ用設定ファイル
+*.pdb
+*.coverage
+
+# サーバーログ
+*.log
+
+# tensorflow モデル
+model/
