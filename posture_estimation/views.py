@@ -38,24 +38,16 @@ class ProcessVideoView(View):
         try:
             # 動画のパス（デフォルトのinput.mp4）
             video_file = request.FILES.get("video")
-            if not video_file:
-                return JsonResponse(
-                    {
-                        "error": "No video file provided in request.",
-                        "response_code": 400,
-                    }
+            video_path = os.path.join(settings.TEMP_DIR, video_file.name)
+            save_uploaded_file(video_file, video_path)
+
+            # ファイルが存在するか確認
+            if not os.path.exists(video_path):
+                raise FileNotFoundError(
+                    f"Video file not found after saving: {video_path}"
                 )
 
-            output_dir = Path(settings.BASE_DIR) / "posture_estimation" / "outputs"
-            output_dir.mkdir(parents=True, exist_ok=True)
-
-            # アップロードされたファイルを保存
-            logger.info("ファイル保存を開始します")
-            video_path = output_dir / video_file.name
-            with open(video_path, "wb") as f:
-                for chunk in video_file.chunks():
-                    f.write(chunk)
-
+            output_dir = "outputs/frames"
             output_video, frame_list = self.service.process_video(
                 video_path, output_dir
             )
@@ -76,3 +68,14 @@ class ProcessVideoView(View):
                     "response_code": 500,
                 }
             )
+
+
+def save_uploaded_file(uploaded_file, destination_path):
+    try:
+        with open(destination_path, "wb+") as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+        print(f"File saved at: {destination_path}")
+    except Exception as e:
+        print(f"Error saving file: {e}")
+        raise

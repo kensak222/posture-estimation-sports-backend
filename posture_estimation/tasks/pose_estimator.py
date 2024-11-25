@@ -1,3 +1,4 @@
+import os
 import cv2
 import tensorflow as tf
 from pathlib import Path
@@ -19,6 +20,42 @@ class PoseEstimator:
         loaded_model = tf.saved_model.load(model_path)
         self.infer = loaded_model.signatures["serving_default"]
 
+    def apply_pose_estimation(self, image_path, output_dir):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        image = cv2.imread(image_path)
+        input_tensor = tf.convert_to_tensor(
+            [tf.image.resize(image, (256, 256))], dtype=tf.float32
+        )
+        outputs = self.model.signatures["serving_default"](input_tensor)
+        keypoints = outputs["output_0"].numpy().reshape(-1, 3)
+
+        # 可視化 (例: 人間の姿勢をラインで描画)
+        for x, y, _ in keypoints:
+            cv2.circle(image, (int(x), int(y)), 5, (0, 255, 0), -1)
+
+        output_path = os.path.join(output_dir, os.path.basename(image_path))
+        cv2.imwrite(output_path, image)
+        return output_path
+
+    def create_video_from_frames(frame_dir, output_path, fps=30):
+        images = sorted(
+            [
+                os.path.join(frame_dir, f)
+                for f in os.listdir(frame_dir)
+                if f.endswith(".png")
+            ]
+        )
+        frame = cv2.imread(images[0])
+        height, width, layers = frame.shape
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        video = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        for image in images:
+            video.write(cv2.imread(image))
+        video.release()
+
     def process_frame(self, frame):
         """
         Processes a single video frame for pose estimation.
@@ -29,12 +66,13 @@ class PoseEstimator:
         Returns:
             numpy.ndarray: Keypoints extracted from the frame, including [x, y, confidence].
         """
-        input_image = tf.image.resize(frame, (256, 256))  # Resize to model input size
-        input_image = tf.cast(input_image, dtype=tf.int32)  # Change dtype to tf.int32
-        input_image = tf.expand_dims(input_image, axis=0)  # Add batch dimension
+        input_image = tf.image.resize(frame, (256, 256))
+        input_image = tf.cast(input_image, dtype=tf.int32)
+        input_image = tf.expand_dims(input_image, axis=0)
 
-        outputs = self.infer(input=tf.constant(input_image))  # Perform inference
-        keypoints = outputs["output_0"]  # Get keypoints output
+        outputs = self.infer(input=tf.constant(input_image))
+        # Output is a [1, 1, 17, 3] tensor.
+        keypoints = outputs["output_0"]
 
         return keypoints.numpy()
 
@@ -54,17 +92,21 @@ class PoseEstimator:
         logger.info(f"Keypoints content: {keypoints}")
 
         # keypoints の形状を確認し、適切にループ処理を行います
-        for i in range(keypoints.shape[1]):  # 例: 6つの関節部位を想定
+        for i in range(keypoints.shape[1]):  # 6つの関節部位
             keypoint = keypoints[0, i, :]
-            x, y, confidence = keypoint
+            logger.info(f"Keypoint: {keypoint}")
 
-            # Confidenceが大きい場合に描画
+            # 最初の3つの値 (x, y, confidence) を抽出
+            if len(keypoint) >= 3:  # 3つの要素が存在する場合
+                x, y, confidence = keypoint[:3]
+            else:
+                logger.warning(f"Unexpected keypoint format: {keypoint}")
+                continue  # この keypoint は無視
+
             if confidence > 0.2:
-                logger.info(
-                    f"信頼度が高いためキーポイントを描画します Keypoints structure: {keypoints.shape}"
-                )
                 cv2.circle(frame, (int(x), int(y)), 5, (0, 255, 0), -1)
-            return frame
+
+        return frame
 
     def process_video(self, video_path, output_dir):
         """
@@ -78,7 +120,7 @@ class PoseEstimator:
             str: Path to the saved output video (output.mp4).
         """
         logger.info("動画への姿勢推定を開始します")
-        cap = cv2.VideoCapture(video_path)
+        cap = cv2.VideoCapture(str(Path(video_path)), 0)
         fps = cap.get(cv2.CAP_PROP_FPS)  # Get the frames per second of the input video
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import cv2
 
@@ -16,23 +17,39 @@ class VideoProcessor:
 
     def process(self, video_path, output_dir):
         logger.info("動画処理を開始します")
-        output_video_path = Path(output_dir) / "output_video.mp4"
-        frame_output_dir, frame_list = self.pose_estimator.process_video(
-            video_path, output_dir
-        )
 
-        self.generate_video(frame_list, str(output_video_path))
-        return str(output_video_path), frame_list
+        # ステップ 1: フレーム抽出
+        frame_list = self.extract_frames(video_path, output_dir)
 
-    def generate_video(self, frames, output_path):
-        logger.info("姿勢推定後の動画を生成します")
-        frame = cv2.imread(frames[0])
-        height, width, _ = frame.shape
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        video_writer = cv2.VideoWriter(output_path, fourcc, 1, (width, height))
+        # ステップ 2: 姿勢推定適用
+        processed_dir = "outputs/processed"
+        processed_frames = [
+            self.pose_estimator.apply_pose_estimation(frame, processed_dir)
+            for frame in frame_list
+        ]
 
-        for frame_path in frames:
-            frame = cv2.imread(frame_path)
-            video_writer.write(frame)
+        # ステップ 3: 動画生成
+        final_video_path = "outputs/output.mp4"
+        self.pose_estimator.create_video_from_frames(processed_dir, final_video_path)
 
-        video_writer.release()
+        return final_video_path, processed_frames
+
+    def extract_frames(video_path, output_dir, frame_rate=1):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        cap = cv2.VideoCapture(str(Path(video_path)), 0)
+        count = 0
+        success, frame = cap.read()
+        while success:
+            if (
+                int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+                % (cap.get(cv2.CAP_PROP_FPS) // frame_rate)
+                == 0
+            ):
+                output_path = os.path.join(output_dir, f"frame_{count:04d}.png")
+                cv2.imwrite(output_path, frame)
+                count += 1
+            success, frame = cap.read()
+        cap.release()
+        return [os.path.join(output_dir, f) for f in sorted(os.listdir(output_dir))]
