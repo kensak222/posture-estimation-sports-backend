@@ -1,15 +1,19 @@
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.core.files.storage import FileSystemStorage
+from django.http import JsonResponse
+from django.views import View
+from django.conf import settings
 from pathlib import Path
 import os
+import os
 
-from posture_estimation.services.posture_estimation_service import (
-    PostureEstimationService,
-)
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+import logging
+
+from posture_estimation.services.video_processor_service import VideoProcessorService
+
+logger = logging.getLogger("django")
 
 
 class HomePageView(View):
@@ -17,65 +21,37 @@ class HomePageView(View):
         return HttpResponse("Welcome to the Home Page!")  # ホームページ用のメッセージ
 
 
-def session_test_view(request):
-    session_id = request.session.session_key  # セッションIDを取得
-    if not session_id:
-        # セッションが無い場合、強制的に新しいセッションを作成
-        request.session.create()
-
-    # セッションIDを返す
-    return HttpResponse(f"Session ID: {session_id}")
-
-
+@method_decorator(csrf_exempt, name="dispatch")  # CSRFを無効にする
 class ProcessVideoView(View):
-    # CSRFを無効化する
-    # @method_decorator(csrf_exempt)
     def post(self, request, *args, **kwargs):
-        # 動画ファイルの取得
-        video_file = request.FILES.get("file")
-        if not video_file:
-            return JsonResponse({"error": "No file uploaded."}, status=400)
+        logger.info("process-video リクエストの処理を開始します")
+        try:
+            # 動画のパス（デフォルトのinput.mp4）
+            video_file = request.FILES["video"]
+            output_dir = Path(settings.BASE_DIR) / "posture_estimation" / "outputs"
 
-        # ファイルを保存
-        fs = FileSystemStorage()
-        filename = fs.save(video_file.name, video_file)
-        file_url = fs.url(filename)
+            video_path = output_dir / video_file.name
+            with open(video_path, "wb") as f:
+                for chunk in video_file.chunks():
+                    f.write(chunk)
 
-        video_path = os.path.join(
-            Path(__file__).resolve().parent.parent.parent, "input.mp4"
-        )
+            model_path = Path(settings.BASE_DIR) / "ai_model" / "move_net_thunder_fp16"
+            processor = VideoProcessorService(model_path)
+            output_video, frame_list = processor.process(video_path, output_dir)
 
-        output_dir = os.path.join(
-            Path(__file__).resolve().parent.parent.parent, "outputs"
-        )
-        os.makedirs(output_dir, exist_ok=True)
+            return JsonResponse(
+                {
+                    "output_video": output_video,
+                    "frame_list": frame_list,
+                    "response_code": 200,
+                }
+            )
 
-        images, output_video_path = self.process_video_and_generate_output(
-            video_path, output_dir
-        )
-
-        # 画像リストと生成した動画パスを返す
-        response_data = {
-            "message": "Video processing completed.",
-            "images": images,  # 画像リスト
-            "video": output_video_path,  # 生成した動画のパス
-        }
-        return JsonResponse(response_data)
-
-    # 動画に対して姿勢推定をかけ、画像リストと動画を生成する処理を行う
-    def process_video_and_generate_output(self, video_path, output_dir):
-        model_path = os.path.join(
-            Path(__file__).resolve().parent.parent.parent,
-            "ai_model",
-            "move_net_thunder_fp16",
-        )
-        posture_service = PostureEstimationService(model_path)
-
-        # 姿勢推定をかけた画像リストの生成
-        images = posture_service.process_video(video_path, output_dir)
-
-        # 姿勢推定をかけた動画の生成
-        output_video_path = os.path.join(output_dir, "output_video.mp4")
-        posture_service.generate_video_with_pose(video_path, output_video_path)
-
-        return images, output_video_path
+        except Exception as e:
+            logger.error(e)
+            return JsonResponse(
+                {
+                    "error": str(e),
+                    "response_code": 500,
+                }
+            )
