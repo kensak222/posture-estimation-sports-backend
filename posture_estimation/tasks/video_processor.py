@@ -1,16 +1,21 @@
 from pathlib import Path
 import cv2
 
-from posture_estimation.services.posture_estimation_service import (
-    PostureEstimatorService,
+from posture_estimation.tasks.pose_estimator import (
+    PoseEstimator,
 )
 
+import logging
 
-class VideoProcessorService:
+logger = logging.getLogger("django")
+
+
+class VideoProcessor:
     def __init__(self, model_path):
-        self.pose_estimator = PostureEstimatorService(model_path)
+        self.pose_estimator = PoseEstimator(model_path)
 
     def process(self, video_path, output_dir):
+        logger.info("動画処理を開始します")
         output_video_path = Path(output_dir) / "output_video.mp4"
         frame_output_dir, frame_list = self.pose_estimator.process_video(
             video_path, output_dir
@@ -20,6 +25,7 @@ class VideoProcessorService:
         return str(output_video_path), frame_list
 
     def generate_video(self, frames, output_path):
+        logger.info("姿勢推定後の動画を生成します")
         frame = cv2.imread(frames[0])
         height, width, _ = frame.shape
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
