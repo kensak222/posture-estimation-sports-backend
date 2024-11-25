@@ -42,7 +42,7 @@ cd posture-estimation-sports-backend
 #### 2.1: 仮想環境の作成
 
 ```bash
-python -m venv myenv
+make myenv
 ```
 
 #### 2.2: 仮想環境の有効化
@@ -64,7 +64,7 @@ source myenv/bin/activate
 プロジェクトに必要なライブラリをインストールします。
 
 ```bash
-pip install -r requirements.txt
+make update_requirements
 ```
 
 ### 4. データベースのマイグレーション
@@ -72,7 +72,7 @@ pip install -r requirements.txt
 Djangoのデータベース設定を反映させるために、マイグレーションを実行します。
 
 ```bash
-python manage.py migrate
+make migrate
 ```
 
 ### 5. 開発サーバーの起動
@@ -80,7 +80,7 @@ python manage.py migrate
 サーバーを起動し、プロジェクトが正しく動作するかを確認します。
 
 ```bash
-python manage.py runserver
+make runserver
 ```
 
 ブラウザで `http://127.0.0.1:8000/` にアクセスして、Djangoのウェルカムページが表示されれば、セットアップが成功しています。
