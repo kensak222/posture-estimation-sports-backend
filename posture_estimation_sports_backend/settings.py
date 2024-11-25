@@ -10,8 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import datetime
+import os
 from pathlib import Path
 
+PROJECT_NAME = "posture-estimation-sports-backend"
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -100,6 +103,48 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+today = datetime.date.today().strftime("%Y%m%d")
+LOGGING = {
+    "version": 1,
+    # ログ出力フォーマットの設定
+    "formatters": {
+        "development": {"format": "%(asctime)s [%(levelname)s] %(message)s"},
+        "production": {
+            "format": "%(asctime)s [%(levelname)s] %(process)d %(thread)d "
+            "%(pathname)s:%(lineno)d %(message)s"
+        },
+    },
+    # ハンドラの設定
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "development",
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, f"logs/log_{today}.log"),
+            "formatter": "development",
+        },
+    },
+    # ロガーの設定
+    "loggers": {
+        # 自分で追加したアプリケーション全般のログを拾うロガー
+        "": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Django自身が出力するログ全般を拾うロガー
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -139,22 +184,3 @@ SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_PATH = "/"
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000"]
-
-# リクエスト時のセッションと CSRF トークンの処理を確認
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-        },
-    },
-    "loggers": {
-        "django.request": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-    },
-}
