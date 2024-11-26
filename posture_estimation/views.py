@@ -1,22 +1,21 @@
+import shutil
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views import View
-from django.conf import settings
-from pathlib import Path
-import os
 import os
 
+from injector import inject
+
+from .di_container import injector
 from posture_estimation.services.posture_estimation_service import (
     PostureEstimationService,
 )
+from posture_estimation.services.video_processing_service import VideoProcessingService
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 import logging
-
-from .dependencies import injector
-from posture_estimation.tasks.video_processor import VideoProcessor
 
 logger = logging.getLogger("django")
 
@@ -28,54 +27,41 @@ class HomePageView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")  # CSRFを無効にする
 class ProcessVideoView(View):
+    @inject
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # サービスインスタンスをDIコンテナから取得
-        self.service = injector.get(PostureEstimationService)
+        self.video_service = injector.get(VideoProcessingService)
+        self.posture_service = injector.get(PostureEstimationService)
 
-    def post(self, request, *args, **kwargs):
-        logger.info("process-video リクエストの処理を開始します")
+    def post(self, request):
+        logger.info("process_videoリクエストを受け取りました")
         try:
-            # 動画のパス（デフォルトのinput.mp4）
-            video_file = request.FILES.get("video")
-            video_path = os.path.join(settings.TEMP_DIR, video_file.name)
-            save_uploaded_file(video_file, video_path)
+            # 入力動画の処理
+            logger.info("入力動画の処理を開始")
+            video_path = request.FILES["video"].temporary_file_path()
+            temp_dir = "temp"
+            frames_dir = os.path.join(temp_dir, "frames")
+            pose_dir = os.path.join(temp_dir, "pose")
+            frames = self.video_service.split_video_to_frames(video_path, frames_dir)
 
-            # ファイルが存在するか確認
-            if not os.path.exists(video_path):
-                raise FileNotFoundError(
-                    f"Video file not found after saving: {video_path}"
-                )
+            # 姿勢推定処理
+            logger.info("姿勢推定処理を開始")
+            for frame in frames:
+                pose_output = os.path.join(pose_dir, os.path.basename(frame))
+                self.posture_service.estimate_pose(frame, pose_output)
 
-            output_dir = "outputs/frames"
-            output_video, frame_list = self.service.process_video(
-                video_path, output_dir
-            )
+            # 動画再構成
+            logger.info("動画再構成を開始")
+            output_video = "outputs/output.mp4"
+            self.video_service.combine_frames_to_video(pose_dir, output_video)
 
-            return JsonResponse(
-                {
-                    "output_video": output_video,
-                    "frame_list": frame_list,
-                    "response_code": 200,
-                }
-            )
+            # 一時ファイル削除
+            logger.info("一時ディレクトリ削除")
+            shutil.rmtree(temp_dir)
+
+            # レスポンス
+            return JsonResponse({"video_url": output_video, "status_code": 200})
 
         except Exception as e:
-            logger.error(e)
-            return JsonResponse(
-                {
-                    "error": str(e),
-                    "response_code": 500,
-                }
-            )
-
-
-def save_uploaded_file(uploaded_file, destination_path):
-    try:
-        with open(destination_path, "wb+") as f:
-            for chunk in uploaded_file.chunks():
-                f.write(chunk)
-        print(f"File saved at: {destination_path}")
-    except Exception as e:
-        print(f"Error saving file: {e}")
-        raise
+            logger.error(f"エラー: {e}")
+            return JsonResponse({"code": 500, "message": str(e)})

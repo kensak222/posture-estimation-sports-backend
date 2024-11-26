@@ -123,5 +123,7 @@ curl -X POST -F "video=@your_video.mp4" http://127.0.0.1:8000/api/posture-estima
 - `keras==3.5.0`
 - `numpy==1.26.4`
 - `pandas==2.2.2`
+- `matplotlib`
 - `opencv-python`
 - `ffmpeg-python`
+- `injector`
