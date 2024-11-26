@@ -17,7 +17,7 @@ from pathlib import Path
 PROJECT_NAME = "posture-estimation-sports-backend"
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-TEMP_DIR = os.path.join(BASE_DIR, "temp_files")
+TEMP_DIR = os.path.join(BASE_DIR, "temp")
 if not os.path.exists(TEMP_DIR):
     os.makedirs(TEMP_DIR)
 

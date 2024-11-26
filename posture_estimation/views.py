@@ -8,6 +8,8 @@ import os
 
 from injector import inject
 
+from posture_estimation_sports_backend import settings
+
 from .di_container import injector
 from posture_estimation.services.posture_estimation_service import (
     PostureEstimationService,
@@ -37,11 +39,13 @@ class ProcessVideoView(View):
         logger.info("process_videoリクエストを受け取りました")
         try:
             # 入力動画の処理
+            logger.info("動画保存を開始")
+            video_file = request.FILES.get("video")
+            video_path = os.path.join(settings.TEMP_DIR, video_file.name)
+            save_uploaded_file(video_file, video_path)
             logger.info("入力動画の処理を開始")
-            video_path = request.FILES["video"].temporary_file_path()
-            temp_dir = "temp"
-            frames_dir = os.path.join(temp_dir, "frames")
-            pose_dir = os.path.join(temp_dir, "pose")
+            frames_dir = os.path.join(settings.TEMP_DIR, "frames")
+            pose_dir = os.path.join(settings.TEMP_DIR, "pose")
             frames = self.video_service.split_video_to_frames(video_path, frames_dir)
 
             # 姿勢推定処理
@@ -55,13 +59,20 @@ class ProcessVideoView(View):
             output_video = "outputs/output.mp4"
             self.video_service.combine_frames_to_video(pose_dir, output_video)
 
-            # 一時ファイル削除
-            logger.info("一時ディレクトリ削除")
-            shutil.rmtree(temp_dir)
-
             # レスポンス
             return JsonResponse({"video_url": output_video, "status_code": 200})
 
         except Exception as e:
             logger.error(f"エラー: {e}")
             return JsonResponse({"code": 500, "message": str(e)})
+
+
+def save_uploaded_file(uploaded_file, destination_path):
+    try:
+        with open(destination_path, "wb+") as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+        print(f"File saved at: {destination_path}")
+    except Exception as e:
+        print(f"Error saving file: {e}")
+        raise

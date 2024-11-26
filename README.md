@@ -67,7 +67,13 @@ source myenv/bin/activate
 make update_requirements
 ```
 
-### 4. データベースのマイグレーション
+### 4. ffmpeg をインストールし、PATHを通す
+
+1. [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) から Get packages & executable files > Widowsアイコン > Windows builds by BtbN > ffmpeg-master-latest-win64-gpl.zip をタップして、インストールする
+  - Mac や Linux では、よしなにインストールする
+2. zipを解答し、`C:\FFmpeg\bin`のようにPATHを通す
+
+### 5. データベースのマイグレーション
 
 Djangoのデータベース設定を反映させるために、マイグレーションを実行します。
 
@@ -75,7 +81,7 @@ Djangoのデータベース設定を反映させるために、マイグレー�
 make migrate
 ```
 
-### 5. 開発サーバーの起動
+### 6. 開発サーバーの起動
 
 サーバーを起動し、プロジェクトが正しく動作するかを確認します。
 

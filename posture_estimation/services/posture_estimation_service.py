@@ -117,8 +117,6 @@ class PostureEstimationService:
         else:
             raise ValueError(f"Unexpected image shape: {image.shape}")
 
-        logger.info(f"Processing image with shape: {image.shape}")
-
         height, width, channel = image.shape
         aspect_ratio = float(width) / height
         fig, ax = plt.subplots(figsize=(12 * aspect_ratio, 12))
