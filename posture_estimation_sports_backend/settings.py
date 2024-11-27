@@ -21,6 +21,9 @@ TEMP_DIR = os.path.join(BASE_DIR, "temp")
 if not os.path.exists(TEMP_DIR):
     os.makedirs(TEMP_DIR)
 
+# 動画ファイルなどの静的ファイルを保存するディレクトリ
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/

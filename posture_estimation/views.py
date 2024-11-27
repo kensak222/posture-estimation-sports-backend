@@ -55,11 +55,11 @@ class ProcessVideoView(View):
 
             # 動画再構成
             logger.info("動画再構成を開始")
-            output_video = "outputs/output.mp4"
+            output_video = "media/output.mp4"
             self.video_service.combine_frames_to_video(pose_dir, output_video)
 
             # レスポンス
-            output_path = "http://127.0.0.1:8000/outputs/output.mp4"
+            output_path = "http://10.0.2.2:8000/" + output_video
             logger.info(f"レスポンスを返却します output_path : ${output_path}")
             return JsonResponse({"video_url": output_path, "status_code": 200})
 
