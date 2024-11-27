@@ -1,4 +1,3 @@
-import shutil
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -60,7 +59,9 @@ class ProcessVideoView(View):
             self.video_service.combine_frames_to_video(pose_dir, output_video)
 
             # レスポンス
-            return JsonResponse({"video_url": output_video, "status_code": 200})
+            output_path = "http://127.0.0.1:8000/outputs/output.mp4"
+            logger.info(f"レスポンスを返却します output_path : ${output_path}")
+            return JsonResponse({"video_url": output_path, "status_code": 200})
 
         except Exception as e:
             logger.error(f"エラー: {e}")

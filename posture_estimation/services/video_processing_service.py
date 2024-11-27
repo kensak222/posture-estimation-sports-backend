@@ -45,6 +45,9 @@ class VideoProcessingService:
         except CalledProcessError as e:
             logger.error(f"ffmpeg error: {e.stderr.decode()}")
             raise
+        except ffmpeg.Error as e:
+            logger.error(f"ffmpeg-python error: {e.stderr.decode()}")
+            raise
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
             raise

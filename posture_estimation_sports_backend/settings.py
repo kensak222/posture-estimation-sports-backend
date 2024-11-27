@@ -31,7 +31,11 @@ SECRET_KEY = "django-insecure-fr)%!e=wn)224y#fh)ry2ursje1=4g8trnapdb#2-$2994!$1q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "10.0.2.2",  # Flutter エミュレーターからのリクエストを許可
+]
 
 
 # Application definition
@@ -136,13 +140,13 @@ LOGGING = {
         # 自分で追加したアプリケーション全般のログを拾うロガー
         "": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
         # Django自身が出力するログ全般を拾うロガー
         "django": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
     },
