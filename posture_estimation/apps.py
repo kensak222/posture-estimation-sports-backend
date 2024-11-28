@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class PostureEstimationConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'posture_estimation'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "posture_estimation"
