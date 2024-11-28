@@ -14,9 +14,23 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
+
 from django.urls import path
+from django.conf.urls.static import static
+
+from posture_estimation.views import (
+    HomePageView,
+    ProcessVideoView,
+)
+from posture_estimation_sports_backend import settings
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("process-video/", ProcessVideoView.as_view(), name="process_video"),
+    path(
+        "", HomePageView.as_view(), name="home"
+    ),  # '/' にアクセスした際に表示するページ
 ]
+
+# MEDIA_URL配下のリクエストを処理
+if settings.DEBUG:  # 開発時のみ有効
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

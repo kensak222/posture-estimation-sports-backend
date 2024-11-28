@@ -8,14 +8,13 @@
 - [使い方](#使い方)
 - [ディレクトリ構造](#ディレクトリ構造)
 - [依存関係](#依存関係)
-- [ライセンス](#ライセンス)
 
 ## 概要
 
 このプロジェクトでは、リクエストを受け取るとサーバーマシン上の動画を選択し、その動画に姿勢推定を適用します。推定結果を画像として抽出し、動画と画像リストをクライアントに返却します。
 
-- **使用技術**:
-  - **Python**: バックエンド開発のプログラミング言語
+- **主な使用技術**:
+  - **Python 3.10.11**: バックエンド開発のプログラミング言語
   - **Django**: Webアプリケーションフレームワーク
   - **TensorFlow**: 姿勢推定のための機械学習ライブラリ
   - **Keras**: TensorFlowの高水準API
@@ -23,7 +22,9 @@
 
 ## セットアップ手順
 
-以下の手順に従って、このプロジェクトをセットアップしてください。
+<details>
+
+<summary>クリックしてセットアップ手順を確認してください。</summary>
 
 ### 1. リポジトリのクローン
 
@@ -41,7 +42,7 @@ cd posture-estimation-sports-backend
 #### 2.1: 仮想環境の作成
 
 ```bash
-python -m venv venv
+make myenv
 ```
 
 #### 2.2: 仮想環境の有効化
@@ -49,13 +50,13 @@ python -m venv venv
 - **Windows**の場合:
 
 ```bash
-venv\Scripts\activate
+myenv\Scripts\activate
 ```
 
 - **Mac/Linux**の場合:
 
 ```bash
-source venv/bin/activate
+source myenv/bin/activate
 ```
 
 ### 3. 依存関係のインストール
@@ -63,26 +64,34 @@ source venv/bin/activate
 プロジェクトに必要なライブラリをインストールします。
 
 ```bash
-pip install -r requirements.txt
+make update_requirements
 ```
 
-### 4. データベースのマイグレーション
+### 4. ffmpeg をインストールし、PATHを通す
+
+1. [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) から Get packages & executable files > Widowsアイコン > Windows builds by BtbN > ffmpeg-master-latest-win64-gpl.zip をタップして、インストールする
+  - Mac や Linux では、よしなにインストールする
+2. zipを解答し、`C:\FFmpeg\bin`のようにPATHを通す
+
+### 5. データベースのマイグレーション
 
 Djangoのデータベース設定を反映させるために、マイグレーションを実行します。
 
 ```bash
-python manage.py migrate
+make migrate
 ```
 
-### 5. 開発サーバーの起動
+### 6. 開発サーバーの起動
 
 サーバーを起動し、プロジェクトが正しく動作するかを確認します。
 
 ```bash
-python manage.py runserver
+make runserver
 ```
 
 ブラウザで `http://127.0.0.1:8000/` にアクセスして、Djangoのウェルカムページが表示されれば、セットアップが成功しています。
+
+</details>
 
 ## 使い方
 
@@ -111,40 +120,6 @@ curl -X POST -F "video=@your_video.mp4" http://127.0.0.1:8000/api/posture-estima
 - 動画のサイズが大きい場合、処理に時間がかかることがあります。タイムアウト設定などを考慮することをおすすめします。
 - 姿勢推定の精度は使用するモデル（`move_net_thunder_fp16`）に依存します。適切なデバイスやリソースを用意してください。
 
-## ディレクトリ構造
+### サンプル
 
-```
-posture-estimation-sports-backend/
-│
-├── posture_estimation/        # Djangoアプリケーション
-│   ├── migrations/            # マイグレーションファイル
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── tests.py
-│   ├── views.py
-│   └── services.py           # 姿勢推定処理を行うサービス
-│
-├── posture_estimation_sports_backend/  # プロジェクト設定ディレクトリ
-│   ├── __init__.py
-│   ├── settings.py            # プロジェクト設定
-│   ├── urls.py                # URL設定
-│   ├── asgi.py                # ASGI設定
-│   ├── wsgi.py                # WSGI設定
-│
-├── requirements.txt           # 依存ライブラリリスト
-├── manage.py                  # Django管理コマンド
-└── .gitignore                 # Git管理に無視するファイル
-```
-
-## 依存関係
-
-以下のライブラリがこのプロジェクトに必要です:
-
-- `Django==5.0`
-- `tensorflow==2.17.1`
-- `keras==3.5.0`
-- `numpy==1.26.4`
-- `pandas==2.2.2`
-- `opencv-python==4.7.0.72`
+https://github.com/user-attachments/assets/2dd9cb78-96f7-4557-8468-aee460441972
