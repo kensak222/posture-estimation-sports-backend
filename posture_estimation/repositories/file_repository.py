@@ -13,9 +13,9 @@ class FileRepository:
             with open(destination_path, "wb+") as f:
                 for chunk in uploaded_file.chunks():
                     f.write(chunk)
-            print(f"File saved at: {destination_path}")
+            print(f"input.mp4を保存します: {destination_path}")
         except Exception as e:
-            print(f"Error saving file: {e}")
+            print(f"input.mp4の保存に失敗しました: {e}")
             raise
 
     def delete_files_in_directory(self, directory_path):
