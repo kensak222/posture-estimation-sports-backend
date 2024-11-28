@@ -7,6 +7,7 @@ import os
 
 from injector import inject
 
+from posture_estimation.services.file_service import FileService
 from posture_estimation_sports_backend import settings
 
 from .di_container import injector
@@ -33,18 +34,22 @@ class ProcessVideoView(View):
         super().__init__(**kwargs)
         self.video_service = injector.get(VideoProcessingService)
         self.posture_service = injector.get(PostureEstimationService)
+        self.file_service = injector.get(FileService)
 
     def post(self, request):
         logger.info("process_videoリクエストを受け取りました")
+        input_dir = os.path.join(settings.TEMP_DIR, "input")
+        frames_dir = os.path.join(settings.TEMP_DIR, "frames")
+        pose_dir = os.path.join(settings.TEMP_DIR, "pose")
+
         try:
             # 入力動画の処理
             logger.info("動画保存を開始")
             video_file = request.FILES.get("video")
-            video_path = os.path.join(settings.TEMP_DIR, video_file.name)
-            save_uploaded_file(video_file, video_path)
+            video_path = os.path.join(input_dir, video_file.name)
+            logger.info(video_path)
+            self.file_service.save_uploaded_file(video_file, video_path)
             logger.info("入力動画の処理を開始")
-            frames_dir = os.path.join(settings.TEMP_DIR, "frames")
-            pose_dir = os.path.join(settings.TEMP_DIR, "pose")
             frames = self.video_service.split_video_to_frames(video_path, frames_dir)
 
             # 姿勢推定処理
@@ -67,13 +72,7 @@ class ProcessVideoView(View):
             logger.error(f"エラー: {e}")
             return JsonResponse({"code": 500, "message": str(e)})
 
-
-def save_uploaded_file(uploaded_file, destination_path):
-    try:
-        with open(destination_path, "wb+") as f:
-            for chunk in uploaded_file.chunks():
-                f.write(chunk)
-        print(f"File saved at: {destination_path}")
-    except Exception as e:
-        print(f"Error saving file: {e}")
-        raise
+        finally:
+            logger.info("不要なファイルを削除します")
+            self.file_service.clean_directories([frames_dir, pose_dir, input_dir])
+            logger.info("不要なファイルの削除が完了しました")
