@@ -11,7 +11,7 @@
 
 ## 概要
 
-このプロジェクトでは、リクエストを受け取るとサーバーマシン上の動画を選択し、その動画に姿勢推定を適用します。推定結果を画像として抽出し、動画と画像リストをクライアントに返却します。
+このプロジェクトでは、リクエストを受け取るとサーバーマシン上の動画を選択し、その動画に姿勢推定を適用します。推定結果のPATHをクライアントに返却します。
 
 - **主な使用技術**:
   - **Python 3.10.11**: バックエンド開発のプログラミング言語
@@ -113,7 +113,13 @@ make runserver
 curl -X POST -F "video=@your_video.mp4" http://127.0.0.1:8000/api/posture-estimate/
 ```
 
-2. レスポンスとして、姿勢推定を適用した動画とそのコマ送り画像リストが返却されます。
+2. レスポンスとして、姿勢推定を適用した動画のPATHが返却されます。
+
+3. 以下のようにして、姿勢推定された動画をGETします、ブラウザから確認するとより分かりやすいです。
+
+```bash
+curl `http://127.0.0.1:8000/[返却されたPATH]`
+```
 
 ### 注意点
 
@@ -122,6 +128,6 @@ curl -X POST -F "video=@your_video.mp4" http://127.0.0.1:8000/api/posture-estima
 
 ### サンプル
 
-動画は[https://www.pexels.com/](https://www.pexels.com/) より拝借  
+動画は[https://www.pexels.com/](https://www.pexels.com/) より拝借しました。  
 
 https://github.com/user-attachments/assets/2dd9cb78-96f7-4557-8468-aee460441972
