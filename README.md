@@ -122,4 +122,6 @@ curl -X POST -F "video=@your_video.mp4" http://127.0.0.1:8000/api/posture-estima
 
 ### サンプル
 
+動画は[https://www.pexels.com/](https://www.pexels.com/) より拝借  
+
 https://github.com/user-attachments/assets/2dd9cb78-96f7-4557-8468-aee460441972
